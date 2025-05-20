@@ -3,12 +3,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
+from streamlit.components.v1 import html
 
 # Logo codificato in base64 (Cluster Reply)
 logo_base64 = "iVBORw0KGgoAAAANSUhEUgAAAZAAAABKCAIAAAAaD5VmAAAgAElEQVR4Aey9..."  # <-- stringa base64 completa qui
 logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="Cluster Reply Logo" style="height:60px;">'
 
 st.set_page_config(page_title="Calcolo ROI AI", layout="centered")
+st.title("📈 Calcolatore per ROI di POC con AI")
 
 # HEADER
 st.markdown(f"""
@@ -19,9 +21,24 @@ st.markdown(f"""
 <hr>
 """, unsafe_allow_html=True)
 
+# SEPARATORE
+st.markdown("---")
+
 # INPUT SECTION
 with st.container():
     st.markdown("### 📅 Parametri di Ingresso")
+
+    # Stile per sfondo giallo tenue nei campi input
+    input_style = """
+    <style>
+    div[data-testid="stNumberInput"] input,
+    div[data-testid="stTextInput"] input {
+        background-color: #fff9c4;
+    }
+    </style>
+    """
+    st.markdown(input_style, unsafe_allow_html=True)
+
     nome_caso = st.text_input("Nome del Caso d'Uso", "Classificazione Email")
     volume_attivita = st.number_input("Volume Attività (unità/mese)", 0, value=10000)
     tempo_pre = st.number_input("Tempo per unità - PRE AI (minuti)", 0.0, value=0.75)
@@ -54,6 +71,9 @@ else:
     label = "mensile"
     risparmio_mese = risparmio
 
+# SEPARATORE
+st.markdown("---")
+
 # OUTPUT SECTION
 with st.container():
     st.markdown("### 📊 Risultati del Calcolo")
@@ -64,13 +84,16 @@ with st.container():
     st.markdown("<small>Nuova struttura di costi considerando automazione parziale e costi AI.</small>", unsafe_allow_html=True)
 
     st.metric(f"Risparmio {label.capitalize()}", f"{risparmio:,.2f} €", help="Costo PRE-AI - Costo POST-AI")
-    st.markdown("<small>Risparmio diretto di costo operativo, su base {label}.</small>", unsafe_allow_html=True)
+    st.markdown(f"<small>Risparmio diretto di costo operativo, su base {label}.</small>", unsafe_allow_html=True)
 
     st.metric(f"ROI su base {label} (%)", f"{roi * 100:,.2f}", help="(Risparmio - Costo iniziale) / Costo iniziale × 100")
     st.markdown("<small>Indice di redditività dell'iniziativa AI rispetto all'investimento iniziale.</small>", unsafe_allow_html=True)
 
     st.metric("Payback Period (mesi)", f"{payback:,.2f}" if payback != float("inf") else "Non raggiunto", help="Costo iniziale / Risparmio mensile")
     st.markdown("<small>Numero di mesi necessari per recuperare l'investimento iniziale.</small>", unsafe_allow_html=True)
+
+# SEPARATORE
+st.markdown("---")
 
 # GRAFICO
 with st.container():
@@ -79,6 +102,7 @@ with st.container():
     cumulato = [risparmio_mese * m - costo_una_tantum for m in mesi]
     fig, ax = plt.subplots()
     ax.plot(mesi, cumulato, marker='o')
+    ax.fill_between(mesi, cumulato, where=[v >= 0 for v in cumulato], alpha=0.1)
     ax.axhline(0, color='gray', linestyle='--')
     ax.axvline(payback, color='red', linestyle='--', label='Break-even')
     ax.set_xlabel("Mesi")
@@ -88,6 +112,9 @@ with st.container():
     ax.legend()
     st.pyplot(fig)
     st.caption("Il grafico mostra il guadagno netto accumulato mese per mese e il punto di pareggio.")
+
+# SEPARATORE
+st.markdown("---")
 
 # EXPORT
 with st.container():
